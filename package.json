@@ -1,0 +1,13 @@
+{
+  "name": "tradeguard-pro",
+  "version": "1.0.0",
+  "description": "TradeGuard Pro - Step-by-Step Rule Enforcer",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.3.1"
+  }
+}
