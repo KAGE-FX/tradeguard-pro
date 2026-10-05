@@ -1,4 +1,4 @@
-# Let's generate the updated version directly with the 6-hour interval popup logic.
+# Let's generate tradeguard-pro-v4.html cleanly with the correct Tailwind modal toggle logic so it centers properly as a popup overlay instead of stacking weirdly.
 
 html_content = """<!DOCTYPE html>
 <html lang="en">
@@ -221,7 +221,7 @@ html_content = """<!DOCTYPE html>
     </div>
 
     <!-- Create Strategy Modal -->
-    <div id="strategy-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="strategy-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <div class="glass-card max-w-lg w-full p-6 rounded-2xl border border-slate-800 space-y-6">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-white flex items-center space-x-2">
@@ -274,7 +274,7 @@ html_content = """<!DOCTYPE html>
     </div>
 
     <!-- DONATION / SUPPORT MODAL (Triggers automatically once every 6 hours) -->
-    <div id="donate-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="donate-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <div class="glass-card max-w-lg w-full p-6 rounded-3xl border border-slate-800 glow-green space-y-5 text-left max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2 text-emerald-400">
@@ -361,11 +361,27 @@ html_content = """<!DOCTYPE html>
         let usersDb = JSON.parse(localStorage.getItem('tg_users_db')) || [];
 
         function openDonateModal() {
-            document.getElementById('donate-modal').classList.remove('hidden');
+            const modal = document.getElementById('donate-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
 
         function closeDonateModal() {
-            document.getElementById('donate-modal').classList.add('hidden');
+            const modal = document.getElementById('donate-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function openCreateStrategyModal() {
+            const modal = document.getElementById('strategy-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCreateStrategyModal() {
+            const modal = document.getElementById('strategy-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         function checkFirstVisitPopup() {
@@ -541,14 +557,6 @@ html_content = """<!DOCTYPE html>
             } else {
                 document.getElementById('stat-discipline').textContent = '100%';
             }
-        }
-
-        function openCreateStrategyModal() {
-            document.getElementById('strategy-modal').classList.remove('hidden');
-        }
-
-        function closeCreateStrategyModal() {
-            document.getElementById('strategy-modal').classList.add('hidden');
         }
 
         function addStepField() {
@@ -825,7 +833,7 @@ html_content = """<!DOCTYPE html>
 </html>
 """
 
-filename = "tradeguard-pro-v3.html"
+filename = "tradeguard-pro-v4.html"
 with open(filename, "w", encoding="utf-8") as f:
     f.write(html_content)
 
