@@ -1,0 +1,832 @@
+# Let's generate the updated version directly with the 6-hour interval popup logic.
+
+html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeGuard Pro - Step-by-Step Rule Enforcer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.5); }
+        .glow-green { box-shadow: 0 0 25px rgba(34, 197, 94, 0.15); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- AUTHENTICATION CONTAINER (Shown when not logged in) -->
+    <div id="auth-view" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-8 rounded-3xl border border-slate-800 glow-green space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 bg-gradient-to-tr from-emerald-500 to-cyan-500 rounded-2xl mx-auto flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-emerald-500/20">
+                    <i data-lucide="shield-check" class="w-8 h-8 stroke-[2.5]"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">TradeGuard Pro</h1>
+                <p class="text-xs text-slate-400">Strict Rule Enforcement & Step-by-Step Execution</p>
+            </div>
+
+            <!-- Tab switcher for Auth -->
+            <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800">
+                <button onclick="switchAuthTab('login')" id="auth-tab-login" class="flex-1 py-2 text-xs font-semibold rounded-lg transition bg-slate-800 text-emerald-400">Login</button>
+                <button onclick="switchAuthTab('register')" id="auth-tab-register" class="flex-1 py-2 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="form-login" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                    <input type="email" id="login-email" placeholder="trader@example.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <button onclick="handleLogin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold py-3 rounded-xl text-sm transition shadow-lg shadow-emerald-600/20">Access Dashboard</button>
+            </div>
+
+            <!-- Register Form -->
+            <div id="form-register" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Trader Name</label>
+                    <input type="text" id="reg-name" placeholder="Alex Trader" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                    <input type="email" id="reg-email" placeholder="trader@example.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Password</label>
+                    <input type="password" id="reg-password" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <button onclick="handleRegister()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold py-3 rounded-xl text-sm transition shadow-lg shadow-emerald-600/20">Create Free Account</button>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                <span>Want to support this tool?</span>
+                <button onclick="openDonateModal()" class="text-emerald-400 hover:underline flex items-center space-x-1 font-medium">
+                    <i data-lucide="coffee" class="w-3.5 h-3.5"></i>
+                    <span>Donate / Crypto Support</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER (Shown after login) -->
+    <div id="app-view" class="hidden flex-1 flex flex-col">
+        <!-- Header -->
+        <header class="border-b border-slate-800 bg-slate-950/80 sticky top-0 z-40 backdrop-blur">
+            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+                    <div class="bg-gradient-to-tr from-emerald-500 to-cyan-500 p-2 rounded-xl text-slate-950 font-bold shadow-lg shadow-emerald-500/20">
+                        <i data-lucide="shield-check" class="w-6 h-6 stroke-[2.5]"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">TradeGuard Pro</h1>
+                        <p class="text-xs text-slate-400" id="header-user-display">Logged in as Trader</p>
+                    </div>
+                </div>
+                <nav class="flex items-center space-x-2">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-slate-800 text-emerald-400 flex items-center space-x-2">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('strategies')" id="nav-strategies" class="px-4 py-2 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900 flex items-center space-x-2">
+                        <i data-lucide="list-tree" class="w-4 h-4"></i>
+                        <span>My Strategies</span>
+                    </button>
+                    <button onclick="switchTab('trades')" id="nav-trades" class="px-4 py-2 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900 flex items-center space-x-2">
+                        <i data-lucide="history" class="w-4 h-4"></i>
+                        <span>Trade Journal</span>
+                    </button>
+                    <button onclick="openDonateModal()" class="px-3 py-2 rounded-lg text-sm font-medium transition text-emerald-400 hover:bg-emerald-500/10 flex items-center space-x-1.5 border border-emerald-500/30">
+                        <i data-lucide="coffee" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Donate</span>
+                    </button>
+                    <button onclick="handleLogout()" class="px-3 py-2 rounded-lg text-sm font-medium transition text-red-400 hover:bg-red-500/10 flex items-center space-x-1 ml-1" title="Logout">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Body Content -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+            <!-- DASHBOARD TAB -->
+            <div id="tab-dashboard" class="space-y-6">
+                <!-- Stats Bar -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="glass-card p-5 rounded-2xl flex items-center space-x-4">
+                        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Discipline Score</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="stat-discipline">100%</h3>
+                        </div>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl flex items-center space-x-4">
+                        <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
+                            <i data-lucide="activity" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Trades Logged</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="stat-total-trades">0</h3>
+                        </div>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl flex items-center space-x-4">
+                        <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
+                            <i data-lucide="book-open" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Active Strategies</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="stat-strategies">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Trade Execution Center -->
+                <div class="glass-card p-6 rounded-2xl border border-slate-800 glow-green">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                                <i data-lucide="crosshair" class="w-5 h-5 text-emerald-400"></i>
+                                <span>Live Step-by-Step Trade Execution</span>
+                            </h2>
+                            <p class="text-sm text-slate-400 mt-1">Select your strategy and upload screenshots sequentially. Subsequent steps remain locked until proof is provided.</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <select id="active-strategy-select" class="bg-slate-900 border border-slate-700 text-sm rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-emerald-500">
+                                <option value="">-- Choose Strategy First --</option>
+                            </select>
+                            <button onclick="startNewTradeSession()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold px-5 py-2.5 rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 flex items-center space-x-2">
+                                <i data-lucide="play" class="w-4 h-4 fill-slate-950"></i>
+                                <span>Start Trade</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Execution Step Wizard Container -->
+                    <div id="execution-container" class="py-8 text-center text-slate-500">
+                        <div class="max-w-md mx-auto space-y-3">
+                            <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-600 border border-slate-800">
+                                <i data-lucide="lock" class="w-8 h-8"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-slate-300">No Active Trade Session</h3>
+                            <p class="text-sm text-slate-500">Select a strategy above and click "Start Trade" to begin uploading screenshots step-by-step.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STRATEGIES TAB -->
+            <div id="tab-strategies" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Your Trading Strategies</h2>
+                        <p class="text-sm text-slate-400 mt-1">Define your step-by-step rules (e.g., Trend, Liq Sweep, BOS, FVG).</p>
+                    </div>
+                    <button onclick="openCreateStrategyModal()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold px-4 py-2.5 rounded-xl text-sm transition flex items-center space-x-2 shadow-lg shadow-emerald-600/20">
+                        <i data-lucide="plus" class="w-4 h-4 stroke-[3]"></i>
+                        <span>Create Strategy</span>
+                    </button>
+                </div>
+
+                <div id="strategies-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- TRADES / HISTORY TAB -->
+            <div id="tab-trades" class="hidden space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Trade History & Rule Audits</h2>
+                    <p class="text-sm text-slate-400 mt-1">Review your completed trades and verified step-by-step screenshots.</p>
+                </div>
+                <div id="trades-list" class="space-y-4">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-500 space-y-2">
+            <p>TradeGuard Pro &copy; 2026 &bull; Built for traders, by a trader.</p>
+            <button onclick="openDonateModal()" class="text-emerald-400 hover:underline">Support Development (Crypto Donations)</button>
+        </footer>
+    </div>
+
+    <!-- Create Strategy Modal -->
+    <div id="strategy-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-lg w-full p-6 rounded-2xl border border-slate-800 space-y-6">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i data-lucide="list-plus" class="w-5 h-5 text-emerald-400"></i>
+                    <span>Define New Strategy</span>
+                </h3>
+                <button onclick="closeCreateStrategyModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Strategy Name</label>
+                    <input type="text" id="new-strat-name" placeholder="e.g., Smart Money Concept (SMC)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Step-by-Step Rules (Sequential)</label>
+                    <div id="modal-steps-container" class="space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold text-slate-500 w-6 text-center">1</span>
+                            <input type="text" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 step-input" value="Higher Timeframe Trend">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold text-slate-500 w-6 text-center">2</span>
+                            <input type="text" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 step-input" value="Liquidity Sweep">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold text-slate-500 w-6 text-center">3</span>
+                            <input type="text" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 step-input" value="Break of Structure (BOS)">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold text-slate-500 w-6 text-center">4</span>
+                            <input type="text" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 step-input" value="Fair Value Gap (FVG)">
+                        </div>
+                    </div>
+                    <button onclick="addStepField()" class="mt-3 text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center space-x-1">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Add Another Step</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
+                <button onclick="closeCreateStrategyModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition">Cancel</button>
+                <button onclick="saveNewStrategy()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold px-5 py-2 rounded-xl text-sm transition shadow-lg shadow-emerald-600/20">Save Strategy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DONATION / SUPPORT MODAL (Triggers automatically once every 6 hours) -->
+    <div id="donate-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-lg w-full p-6 rounded-3xl border border-slate-800 glow-green space-y-5 text-left max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-emerald-400">
+                    <i data-lucide="coffee" class="w-5 h-5"></i>
+                    <h3 class="text-lg font-bold text-white">Support TradeGuard Pro</h3>
+                </div>
+                <button onclick="closeDonateModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-xs text-emerald-300 leading-relaxed">
+                Welcome to TradeGuard Pro! This tool is built for traders by a trader to eliminate emotional mistakes. It's completely free to use. If it saves you from a single bad trade, consider fueling further development!
+            </div>
+
+            <div class="space-y-4">
+                <!-- TRON -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            <span>Tron (USDT / TRX)</span>
+                        </span>
+                        <span class="text-[10px] text-slate-500">TRC20 Network</span>
+                    </div>
+                    <div class="flex items-center space-x-2 bg-slate-900 border border-slate-700 rounded-xl p-2.5">
+                        <input type="text" id="wallet-tron" value="TFnAyo17qk7pixdgKF3EyN3pFsaTmrubaZ" readonly class="bg-transparent text-xs text-emerald-400 font-mono w-full focus:outline-none">
+                        <button onclick="copyAddress('wallet-tron', 'btn-tron')" id="btn-tron" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 flex items-center space-x-1">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- BNB SMART CHAIN -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            <span>BNB Smart Chain (BEP20 / USDT / BNB)</span>
+                        </span>
+                        <span class="text-[10px] text-slate-500">BSC Network</span>
+                    </div>
+                    <div class="flex items-center space-x-2 bg-slate-900 border border-slate-700 rounded-xl p-2.5">
+                        <input type="text" id="wallet-bnb" value="0x390666a16f1527f647dac1e33ffcdbccd5b6fbd7" readonly class="bg-transparent text-xs text-emerald-400 font-mono w-full focus:outline-none">
+                        <button onclick="copyAddress('wallet-bnb', 'btn-bnb')" id="btn-bnb" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 flex items-center space-x-1">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- BITCOIN -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                            <span>Bitcoin (BTC)</span>
+                        </span>
+                        <span class="text-[10px] text-slate-500">Native SegWit</span>
+                    </div>
+                    <div class="flex items-center space-x-2 bg-slate-900 border border-slate-700 rounded-xl p-2.5">
+                        <input type="text" id="wallet-btc" value="bc1q9q8d6p8wd8dm2peaapwgkx6jddfevgveddj4cg" readonly class="bg-transparent text-xs text-emerald-400 font-mono w-full focus:outline-none">
+                        <button onclick="copyAddress('wallet-btc', 'btn-btc')" id="btn-btc" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 flex items-center space-x-1">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                <span class="text-[11px] text-slate-500">Popup displays automatically once every 6 hours.</span>
+                <button onclick="closeDonateModal()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold px-5 py-2.5 rounded-xl text-xs transition">Continue to App</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        lucide.createIcons();
+
+        let currentUser = JSON.parse(localStorage.getItem('tg_current_user')) || null;
+        let usersDb = JSON.parse(localStorage.getItem('tg_users_db')) || [];
+
+        function openDonateModal() {
+            document.getElementById('donate-modal').classList.remove('hidden');
+        }
+
+        function closeDonateModal() {
+            document.getElementById('donate-modal').classList.add('hidden');
+        }
+
+        function checkFirstVisitPopup() {
+            const lastShown = localStorage.getItem('tg_last_donate_popup_time');
+            const now = Date.now();
+            const sixHours = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+
+            if (!lastShown || (now - parseInt(lastShown)) > sixHours) {
+                setTimeout(() => {
+                    openDonateModal();
+                    localStorage.setItem('tg_last_donate_popup_time', now.toString());
+                }, 600);
+            }
+        }
+
+        function copyAddress(inputId, btnId) {
+            const input = document.getElementById(inputId);
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+            
+            const btn = document.getElementById(btnId);
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="text-emerald-400">Copied!</span>';
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+            }, 2000);
+        }
+
+        function switchAuthTab(tab) {
+            if (tab === 'login') {
+                document.getElementById('form-login').classList.remove('hidden');
+                document.getElementById('form-register').classList.add('hidden');
+                document.getElementById('auth-tab-login').className = "flex-1 py-2 text-xs font-semibold rounded-lg transition bg-slate-800 text-emerald-400";
+                document.getElementById('auth-tab-register').className = "flex-1 py-2 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+            } else {
+                document.getElementById('form-login').classList.add('hidden');
+                document.getElementById('form-register').classList.remove('hidden');
+                document.getElementById('auth-tab-register').className = "flex-1 py-2 text-xs font-semibold rounded-lg transition bg-slate-800 text-emerald-400";
+                document.getElementById('auth-tab-login').className = "flex-1 py-2 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+            }
+        }
+
+        function handleRegister() {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim().toLowerCase();
+            const password = document.getElementById('reg-password').value;
+
+            if (!name || !email || !password) {
+                alert('Please fill in all registration fields.');
+                return;
+            }
+
+            if (usersDb.some(u => u.email === email)) {
+                alert('An account with this email already exists. Please log in.');
+                switchAuthTab('login');
+                return;
+            }
+
+            const newUser = {
+                id: 'user_' + Date.now(),
+                name,
+                email,
+                password,
+                isPremium: false,
+                strategies: [
+                    {
+                        id: 'strat_default',
+                        name: 'Trend + Liq Sweep + BOS + FVG',
+                        steps: ['Higher Timeframe Trend', 'Liquidity Sweep', 'Break of Structure (BOS)', 'Fair Value Gap (FVG)']
+                    }
+                ],
+                trades: [],
+                activeSession: null
+            };
+
+            usersDb.push(newUser);
+            localStorage.setItem('tg_users_db', JSON.stringify(usersDb));
+            
+            currentUser = newUser;
+            localStorage.setItem('tg_current_user', JSON.stringify(currentUser));
+            bootApp();
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                alert('Please enter your email and password.');
+                return;
+            }
+
+            const user = usersDb.find(u => u.email === email && u.password === password);
+            if (!user) {
+                alert('Invalid email or password. Please check your credentials or register.');
+                return;
+            }
+
+            currentUser = user;
+            localStorage.setItem('tg_current_user', JSON.stringify(currentUser));
+            bootApp();
+        }
+
+        function handleLogout() {
+            saveUserData();
+            currentUser = null;
+            localStorage.removeItem('tg_current_user');
+            document.getElementById('app-view').classList.add('hidden');
+            document.getElementById('auth-view').classList.remove('hidden');
+        }
+
+        function saveUserData() {
+            if (!currentUser) return;
+            const idx = usersDb.findIndex(u => u.id === currentUser.id);
+            if (idx !== -1) {
+                usersDb[idx] = currentUser;
+                localStorage.setItem('tg_users_db', JSON.stringify(usersDb));
+                localStorage.setItem('tg_current_user', JSON.stringify(currentUser));
+            }
+        }
+
+        function bootApp() {
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('app-view').classList.remove('hidden');
+            document.getElementById('header-user-display').textContent = `Logged in as ${currentUser.name}`;
+            populateStrategyDropdown();
+            updateDashboardStats();
+            if (currentUser.activeSession) {
+                renderActiveSession();
+            } else {
+                resetActiveSessionView();
+            }
+            switchTab('dashboard');
+        }
+
+        function switchTab(tabId) {
+            ['dashboard', 'strategies', 'trades'].forEach(id => {
+                document.getElementById(`tab-${id}`).classList.add('hidden');
+                document.getElementById(`nav-${id}`).className = "px-4 py-2 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900 flex items-center space-x-2";
+            });
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).className = "px-4 py-2 rounded-lg text-sm font-medium transition bg-slate-800 text-emerald-400 flex items-center space-x-2";
+            
+            if (tabId === 'strategies') renderStrategies();
+            if (tabId === 'trades') renderTrades();
+            if (tabId === 'dashboard') updateDashboardStats();
+            lucide.createIcons();
+        }
+
+        function populateStrategyDropdown() {
+            const select = document.getElementById('active-strategy-select');
+            select.innerHTML = '<option value="">-- Choose Strategy First --</option>';
+            currentUser.strategies.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                if (currentUser.activeSession && currentUser.activeSession.strategyId === s.id) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+        }
+
+        function updateDashboardStats() {
+            document.getElementById('stat-total-trades').textContent = currentUser.trades.length;
+            document.getElementById('stat-strategies').textContent = currentUser.strategies.length;
+            
+            if (currentUser.trades.length > 0) {
+                const completed = currentUser.trades.filter(t => t.completed).length;
+                const score = Math.round((completed / currentUser.trades.length) * 100);
+                document.getElementById('stat-discipline').textContent = score + '%';
+            } else {
+                document.getElementById('stat-discipline').textContent = '100%';
+            }
+        }
+
+        function openCreateStrategyModal() {
+            document.getElementById('strategy-modal').classList.remove('hidden');
+        }
+
+        function closeCreateStrategyModal() {
+            document.getElementById('strategy-modal').classList.add('hidden');
+        }
+
+        function addStepField() {
+            const container = document.getElementById('modal-steps-container');
+            const count = container.children.length + 1;
+            const div = document.createElement('div');
+            div.className = "flex items-center space-x-2";
+            div.innerHTML = `
+                <span class="text-xs font-bold text-slate-500 w-6 text-center">${count}</span>
+                <input type="text" placeholder="e.g., Step ${count} Rule" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 step-input">
+                <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            `;
+            container.appendChild(div);
+            lucide.createIcons();
+        }
+
+        function saveNewStrategy() {
+            const name = document.getElementById('new-strat-name').value.trim();
+            const stepInputs = document.querySelectorAll('.step-input');
+            const steps = Array.from(stepInputs).map(i => i.value.trim()).filter(Boolean);
+
+            if (!name) {
+                alert('Please provide a strategy name.');
+                return;
+            }
+            if (steps.length === 0) {
+                alert('Please add at least one rule step.');
+                return;
+            }
+
+            const newStrat = {
+                id: 'strat_' + Date.now(),
+                name,
+                steps
+            };
+
+            currentUser.strategies.push(newStrat);
+            saveUserData();
+            closeCreateStrategyModal();
+            populateStrategyDropdown();
+            updateDashboardStats();
+            alert('Strategy created successfully!');
+        }
+
+        function renderStrategies() {
+            const grid = document.getElementById('strategies-grid');
+            if (currentUser.strategies.length === 0) {
+                grid.innerHTML = `<p class="text-slate-500 text-sm col-span-2">No strategies created yet. Click "Create Strategy" to start.</p>`;
+                return;
+            }
+
+            grid.innerHTML = currentUser.strategies.map(s => `
+                <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-white text-lg">${s.name}</h3>
+                        <button onclick="deleteStrategy('${s.id}')" class="text-slate-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Sequential Steps (${s.steps.length})</p>
+                        <ol class="space-y-1.5">
+                            ${s.steps.map((step, idx) => `
+                                <li class="text-sm text-slate-300 bg-slate-900/60 px-3 py-2 rounded-xl flex items-center space-x-3 border border-slate-800/60">
+                                    <span class="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold flex items-center justify-center shrink-0">${idx + 1}</span>
+                                    <span class="truncate">${step}</span>
+                                </li>
+                            `).join('')}
+                        </ol>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function deleteStrategy(id) {
+            if (currentUser.strategies.length <= 1) {
+                alert('You must keep at least one strategy.');
+                return;
+            }
+            currentUser.strategies = currentUser.strategies.filter(s => s.id !== id);
+            saveUserData();
+            populateStrategyDropdown();
+            renderStrategies();
+            updateDashboardStats();
+        }
+
+        function startNewTradeSession() {
+            const stratId = document.getElementById('active-strategy-select').value;
+            if (!stratId) {
+                alert('Please select a strategy first.');
+                return;
+            }
+
+            const strategy = currentUser.strategies.find(s => s.id === stratId);
+            currentUser.activeSession = {
+                id: 'trade_' + Date.now(),
+                strategyId: strategy.id,
+                strategyName: strategy.name,
+                steps: strategy.steps,
+                currentStepIndex: 0,
+                uploads: new Array(strategy.steps.length).fill(null),
+                timestamp: new Date().toLocaleString(),
+                completed: false
+            };
+
+            saveUserData();
+            renderActiveSession();
+        }
+
+        function renderActiveSession() {
+            const container = document.getElementById('execution-container');
+            const session = currentUser.activeSession;
+            if (!session) return;
+
+            let html = `
+                <div class="space-y-6 text-left max-w-2xl mx-auto">
+                    <div class="flex items-center justify-between bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                        <div>
+                            <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Active Execution</span>
+                            <h3 class="font-bold text-white text-lg">${session.strategyName}</h3>
+                        </div>
+                        <button onclick="cancelSession()" class="text-xs text-red-400 hover:underline">Abandon Trade</button>
+                    </div>
+
+                    <div class="space-y-3">
+            `;
+
+            session.steps.forEach((stepName, idx) => {
+                const isUnlocked = idx <= session.currentStepIndex;
+                const isCompleted = session.uploads[idx] !== null;
+                const isCurrent = idx === session.currentStepIndex && !session.completed;
+
+                let badge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-500 border border-slate-700">Locked</span>`;
+                if (isCompleted) {
+                    badge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1"><i data-lucide="check" class="w-3 h-3"></i><span>Verified</span></span>`;
+                } else if (isCurrent) {
+                    badge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 animate-pulse">Action Required</span>`;
+                }
+
+                html += `
+                    <div class="glass-card p-4 rounded-xl border ${isCurrent ? 'border-emerald-500/50 glow-green' : 'border-slate-800'} transition">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full ${isCompleted ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-400'} flex items-center justify-center text-sm font-bold">
+                                    ${idx + 1}
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white text-sm">${stepName}</h4>
+                                    <p class="text-xs text-slate-400">${isCompleted ? 'Screenshot uploaded & verified' : (isCurrent ? 'Upload chart screenshot to unlock next step' : 'Complete previous step to unlock')}</p>
+                                </div>
+                            </div>
+                            <div>${badge}</div>
+                        </div>
+                `;
+
+                if (isCurrent && !session.completed) {
+                    html += `
+                        <div class="mt-4 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center gap-3">
+                            <input type="file" id="file-input-${idx}" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-slate-950 hover:file:bg-emerald-500 cursor-pointer">
+                            <button onclick="uploadStepScreenshot(${idx})" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold px-4 py-2 rounded-xl text-xs transition shadow-md whitespace-nowrap">
+                                Upload & Unlock Next
+                            </button>
+                        </div>
+                    `;
+                } else if (isCompleted) {
+                    html += `
+                        <div class="mt-3 flex items-center space-x-3">
+                            <img src="${session.uploads[idx]}" alt="Proof" class="w-20 h-14 object-cover rounded-lg border border-slate-700 cursor-pointer hover:scale-105 transition" onclick="window.open('${session.uploads[idx]}')">
+                            <span class="text-xs text-slate-400">Click thumbnail to inspect full chart screenshot.</span>
+                        </div>
+                    `;
+                }
+
+                html += `</div>`;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function uploadStepScreenshot(idx) {
+            const fileInput = document.getElementById(`file-input-${idx}`);
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select or capture a screenshot first.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentUser.activeSession.uploads[idx] = e.target.result;
+                
+                if (idx + 1 < currentUser.activeSession.steps.length) {
+                    currentUser.activeSession.currentStepIndex = idx + 1;
+                } else {
+                    currentUser.activeSession.completed = true;
+                    currentUser.trades.unshift(currentUser.activeSession);
+                    currentUser.activeSession = null;
+                    saveUserData();
+                    alert('🎉 Congratulations! All trade steps successfully completed & verified without breaking rules.');
+                    updateDashboardStats();
+                    switchTab('trades');
+                    return;
+                }
+
+                saveUserData();
+                renderActiveSession();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelSession() {
+            if (confirm('Are you sure you want to abandon this trade session?')) {
+                currentUser.activeSession = null;
+                saveUserData();
+                resetActiveSessionView();
+            }
+        }
+
+        function resetActiveSessionView() {
+            document.getElementById('execution-container').innerHTML = `
+                <div class="max-w-md mx-auto space-y-3">
+                    <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-600 border border-slate-800">
+                        <i data-lucide="lock" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-300">No Active Trade Session</h3>
+                    <p class="text-sm text-slate-500">Select a strategy above and click "Start Trade" to begin uploading screenshots step-by-step.</p>
+                </div>
+            `;
+            populateStrategyDropdown();
+            lucide.createIcons();
+        }
+
+        function renderTrades() {
+            const container = document.getElementById('trades-list');
+            if (currentUser.trades.length === 0) {
+                container.innerHTML = `<p class="text-slate-500 text-sm">No completed trades recorded yet. Complete a live trade session to see audit logs.</p>`;
+                return;
+            }
+
+            container.innerHTML = currentUser.trades.map(t => `
+                <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400">${t.timestamp}</span>
+                            <h3 class="font-bold text-white text-lg">${t.strategyName}</h3>
+                        </div>
+                        <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-semibold rounded-full flex items-center space-x-1">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                            <span>100% Rule Adherence</span>
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                        ${t.steps.map((stepName, sIdx) => `
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                                <span class="text-xs font-bold text-slate-400">Step ${sIdx+1}:${stepName}</span>
+                                <img src="${t.uploads[sIdx]}" alt="Step proof" class="w-full h-20 object-cover rounded-lg border border-slate-700 cursor-pointer hover:opacity-80 transition" onclick="window.open('${t.uploads[sIdx]}')">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        window.onload = function() {
+            if (currentUser) {
+                bootApp();
+            }
+            checkFirstVisitPopup();
+        };
+    </script>
+</body>
+</html>
+"""
+
+filename = "tradeguard-pro-v3.html"
+with open(filename, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print(f"Generated {filename}")
